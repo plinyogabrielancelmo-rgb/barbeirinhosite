@@ -184,6 +184,11 @@ footer{text-align:center;padding:40px 20px;color:var(--mut);font-size:.9rem}foot
 
 <script>
 const PHONE='5522992647465',STEP=30;
+ const SUPABASE_URL='https://ototstfgmzkaltukqrai.supabase.co';
+const SUPABASE_KEY='COLE_SUA_CHAVE_PUBLISHABLE_AQUI';
+ 
+sb_publishable_Gv3DdzcNMrnv_Z2y0RAVBQ_ipRREJhO
+
 const SV=[['Corte disfarçado',30,'Degradê / disfarçado'],['Corte + pigmentação',40,'Corte com pigmento'],['Barba',10,'Barba alinhada'],['Pezinho',10,'Acabamento'],['Corte navalhado',35,'Acabamento na navalha'],['Corte + barba',40,'Combo completo'],['Nevou e reflexo',85,'Descoloração e reflexo']];
 // funcionamento: dia da semana -> [abre, fecha]
 const H={2:[9,17],3:[9,17],4:[9,19],5:[9,19],6:[9,19]};
@@ -233,15 +238,50 @@ $('#nx').onclick=()=>{
  if(cur===2&&!st.h)return alert('Escolha um horário.');
  if(cur===3)return confirmar();
  go(cur+1)};
-function confirmar(){const nome=$('#nm').value.trim();if(nome.length<2)return alert('Digite seu nome.');
+async function confirmar(){
+ const nome=$('#nm').value.trim();
+ if(nome.length<2)return alert('Digite seu nome.');
  const key=st.d+'|'+st.h;
- if(booked.includes(key)){alert('Esse horário acabou de ser ocupado. Escolha outro.');return go(2)}
+ if(booked.includes(key)){
+  alert('Esse horário acabou de ser ocupado. Escolha outro.');
+  return go(2);
+ }
+ const s=SV[st.s];
+ const [y,m,d]=st.d.split('-');
+ const dados={
+  cliente:nome,
+  barbeiro:'Barbeirinho',
+  "serviço":s[0],
+  data_agendamento:st.d,
+  "horário":st.h,
+  status:'pendente'
+ };
+ try{
+  const resposta=await fetch(SUPABASE_URL+'/rest/v1/agendamentos',{
+   method:'POST',
+   headers:{
+    'Content-Type':'application/json',
+    'apikey':SUPABASE_KEY,
+    'Authorization':'Bearer '+SUPABASE_KEY,
+    'Prefer':'return=minimal'
+   },
+   body:JSON.stringify(dados)
+  });
+  if(!resposta.ok){
+   alert('Não foi possível salvar. Confira a conexão com o Supabase.');
+   return;
+  }
+ }catch(e){
+  alert('Erro de conexão. Confira sua internet e tente novamente.');
+  return;
+ }
  booked.push(key);save();
- const s=SV[st.s],[y,m,d]=st.d.split('-');
  const txt=`Olá! Sou ${nome} e quero agendar:\n✂️ ${s[0]} (${brl(s[1])})\n📅 ${d}/${m}/${y}\n🕒 ${st.h}`;
  $('#dmsg').textContent=`${nome}, te esperamos dia ${d}/${m} às ${st.h}. Se o WhatsApp não abriu, clique abaixo.`;
- go(4);$('#dmsg').insertAdjacentHTML('afterend',`<a class="btn" style="margin:6px" href="https://wa.me/${PHONE}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">Abrir WhatsApp</a>`);
- window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(txt)}`,'_blank')}
+ go(4);
+ $('#dmsg').insertAdjacentHTML('afterend',`<a class="btn" style="margin:6px" href="https://wa.me/${PHONE}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">Abrir WhatsApp</a>`);
+ window.open(`https://wa.me/${PHONE}?text=${encodeURIComponent(txt)}`,'_blank');
+}
 function resetB(){st={s:null,d:null,h:null};document.querySelectorAll('.opt.sel').forEach(o=>o.classList.remove('sel'));$('#nm').value='';
  document.querySelectorAll('#done a').forEach(a=>a.remove());go(0)}
 go(0);
